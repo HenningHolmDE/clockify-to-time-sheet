@@ -1,4 +1,5 @@
 use anyhow::Result;
+use chrono::{DateTime, Local};
 use reqwest::header::{self, HeaderValue};
 use serde::Deserialize;
 use std::fs;
@@ -20,11 +21,20 @@ struct Task {
     name: String,
 }
 
+fn task_by_id<'a>(tasks: &'a [Task], id: &str) -> Option<&'a Task> {
+    for task in tasks {
+        if task.id == id {
+            return Some(task);
+        }
+    }
+    None
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct TimeInterval {
-    start: String,
-    end: String,
+    start: DateTime<Local>,
+    end: DateTime<Local>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -60,20 +70,41 @@ async fn main() -> Result<()> {
     let tasks: Vec<Task> = serde_json::from_str(&response_body)?;
     println!("Tasks: {:?}", tasks);
 
-    let start = "2022-09-01T00:00:00Z";
-    let end = "2022-09-02T00:00:00Z";
-    let page = 1;
-    let response = client
-    .get(format!(
-        "https://api.clockify.me/api/v1/workspaces/{}/user/{}/time-entries?project={}&start={}&end={}&page={}",
-        config.workspace_id, config.user_id, config.project_id, start, end, page
-    ))
-    .send()
-    .await?;
-    let response_body = response.text().await?;
-    // println!("Response Body: {}", response_body);
-    let time_entries: Vec<TimeEntry> = serde_json::from_str(&response_body)?;
-    println!("Time entries: {:?}", time_entries);
+    let mut time_entries: Vec<TimeEntry> = vec![];
+    for page in 1..=1 {
+        let start = "2022-09-01T00:00:00Z";
+        let end = "2022-09-06T00:00:00Z";
+        let response = client
+        .get(format!(
+            "https://api.clockify.me/api/v1/workspaces/{}/user/{}/time-entries?project={}&start={}&end={}&page={}",
+            config.workspace_id, config.user_id, config.project_id, start, end, page
+        ))
+        .send()
+        .await?;
+        let response_body = response.text().await?;
+        // println!("Response Body: {}", response_body);
+        let entries: Vec<TimeEntry> = serde_json::from_str(&response_body)?;
+        println!("Entries: {:?}", entries);
+        if entries.len() == 0 {
+            break;
+        }
+        time_entries.extend(entries);
+    }
+
+    for time_entry in time_entries.iter().rev() {
+        println!("Description: {}", time_entry.description);
+        println!(
+            "Task: {}",
+            task_by_id(&tasks, &time_entry.task_id).unwrap().name
+        );
+        // TODO: Round start and end time to nearest 5 minutes.
+        let duration = time_entry.time_interval.end - time_entry.time_interval.start;
+        println!(
+            "Time: {} - {} = {}",
+            time_entry.time_interval.start, time_entry.time_interval.end, duration,
+        );
+        println!();
+    }
 
     Ok(())
 }

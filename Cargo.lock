@@ -76,7 +76,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "clockify-to-excel"
+name = "clockify-to-time-sheet"
 version = "0.1.0"
 dependencies = [
  "anyhow",

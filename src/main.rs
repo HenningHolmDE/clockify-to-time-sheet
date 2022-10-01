@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clockify_to_time_sheet::clockify::retrieve_time_entries;
+use clockify_to_time_sheet::{clockify::retrieve_time_entries, transform::transform_time_entries};
 use serde::Deserialize;
 use std::fs;
 
@@ -25,23 +25,13 @@ async fn main() -> Result<()> {
     )
     .await?;
 
-    for time_entry in time_entries.iter().rev() {
-        println!("Description: {}", time_entry.description);
-        println!(
-            "Task: {}",
-            time_entry
-                .task
-                .as_ref()
-                .map(|task| &task.name)
-                .unwrap_or(&time_entry.task_id)
-        );
+    let time_sheet_entries = transform_time_entries(time_entries);
 
-        let duration = time_entry.time_interval.end - time_entry.time_interval.start;
-        println!(
-            "Time: {} - {} = {}",
-            time_entry.time_interval.start, time_entry.time_interval.end, duration,
-        );
-        println!();
+    for entry in time_sheet_entries {
+        println!("Description: {}", entry.description);
+        println!("Start: {}", entry.start);
+        println!("End: {}", entry.end);
+        println!("Break: {}", entry.break_);
     }
 
     Ok(())

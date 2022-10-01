@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clockify_to_time_sheet::clockify::{retrieve_time_entries, Task};
+use clockify_to_time_sheet::clockify::retrieve_time_entries;
 use serde::Deserialize;
 use std::fs;
 
@@ -13,20 +13,11 @@ struct Config {
     project_id: String,
 }
 
-fn task_by_id<'a>(tasks: &'a [Task], id: &str) -> Option<&'a Task> {
-    for task in tasks {
-        if task.id == id {
-            return Some(task);
-        }
-    }
-    None
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     let config: Config = toml::from_str(&fs::read_to_string(CONFIG_FILE)?)?;
 
-    let (time_entries, tasks) = retrieve_time_entries(
+    let time_entries = retrieve_time_entries(
         &config.api_key,
         &config.user_id,
         &config.workspace_id,
@@ -38,7 +29,11 @@ async fn main() -> Result<()> {
         println!("Description: {}", time_entry.description);
         println!(
             "Task: {}",
-            task_by_id(&tasks, &time_entry.task_id).unwrap().name
+            time_entry
+                .task
+                .as_ref()
+                .map(|task| &task.name)
+                .unwrap_or(&time_entry.task_id)
         );
 
         let duration = time_entry.time_interval.end - time_entry.time_interval.start;

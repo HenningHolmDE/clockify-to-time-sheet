@@ -1,6 +1,7 @@
 use chrono::{DateTime, Local};
 use reqwest::header::{self, HeaderValue};
 use serde::Deserialize;
+use std::collections::HashMap;
 use thiserror::Error;
 
 static CLOCKIFY_API_BASE: &str = "https://api.clockify.me/api/v1";
@@ -15,35 +16,37 @@ pub enum ClockifyError {
     InvalidApiKey(#[from] reqwest::header::InvalidHeaderValue),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Task {
     pub id: String,
     pub name: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeInterval {
     pub start: DateTime<Local>,
     pub end: DateTime<Local>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeEntry {
     pub description: String,
     pub billable: bool,
     pub task_id: String,
     pub time_interval: TimeInterval,
+    pub task: Option<Task>,
 }
 
+/// Retrieve time entries for the given project from Clockify.
 pub async fn retrieve_time_entries(
     api_key: &str,
     user_id: &str,
     workspace_id: &str,
     project_id: &str,
-) -> Result<(Vec<TimeEntry>, Vec<Task>), ClockifyError> {
+) -> Result<Vec<TimeEntry>, ClockifyError> {
     // Set up REST client.
     let mut headers = header::HeaderMap::new();
     headers.insert("X-Api-Key", HeaderValue::from_str(api_key)?);
@@ -61,9 +64,7 @@ pub async fn retrieve_time_entries(
         .send()
         .await?;
     let response_body = response.text().await?;
-    // println!("Response Body: {}", response_body);
     let tasks: Vec<Task> = serde_json::from_str(&response_body)?;
-    println!("Tasks: {:?}", tasks);
 
     // Get time entries from Clockify.
     let mut time_entries: Vec<TimeEntry> = vec![];
@@ -78,14 +79,27 @@ pub async fn retrieve_time_entries(
             .send()
             .await?;
         let response_body = response.text().await?;
-        // println!("Response Body: {}", response_body);
         let entries: Vec<TimeEntry> = serde_json::from_str(&response_body)?;
-        println!("Entries: {:?}", entries);
         if entries.len() == 0 {
             break;
         }
         time_entries.extend(entries);
     }
 
-    Ok((time_entries, tasks))
+    // Convert task list into a hash map for faster lookup.
+    let tasks_map = tasks
+        .into_iter()
+        .map(|task| (task.id.clone(), task))
+        .collect::<HashMap<_, _>>();
+
+    // Resolve task IDs in time entries.
+    let time_entries = time_entries
+        .into_iter()
+        .map(|mut entry| {
+            entry.task = tasks_map.get(&entry.task_id).cloned();
+            entry
+        })
+        .collect::<Vec<_>>();
+
+    Ok(time_entries)
 }

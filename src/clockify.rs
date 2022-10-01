@@ -16,21 +16,21 @@ pub enum ClockifyError {
     InvalidApiKey(#[from] reqwest::header::InvalidHeaderValue),
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Task {
     pub id: String,
     pub name: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeInterval {
     pub start: DateTime<Local>,
     pub end: DateTime<Local>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeEntry {
     pub description: String,
@@ -99,7 +99,7 @@ pub async fn retrieve_time_entries(
             .await?;
         let response_body = response.text().await?;
         let entries: Vec<TimeEntry> = serde_json::from_str(&response_body)?;
-        if entries.len() == 0 {
+        if entries.is_empty() {
             break;
         }
         time_entries.extend(entries);

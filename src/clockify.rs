@@ -16,21 +16,21 @@ pub enum ClockifyError {
     InvalidApiKey(#[from] reqwest::header::InvalidHeaderValue),
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Task {
     pub id: String,
     pub name: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeInterval {
     pub start: DateTime<Local>,
     pub end: DateTime<Local>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeEntry {
     pub description: String,
@@ -38,6 +38,25 @@ pub struct TimeEntry {
     pub task_id: String,
     pub time_interval: TimeInterval,
     pub task: Option<Task>,
+}
+
+/// Resolve task IDs in time entries to corresponding tasks and populate `task`
+/// fields with task data.
+fn resolve_task_ids(time_entries: Vec<TimeEntry>, tasks: Vec<Task>) -> Vec<TimeEntry> {
+    // Convert task list into a hash map for faster lookup.
+    let tasks_map = tasks
+        .into_iter()
+        .map(|task| (task.id.clone(), task))
+        .collect::<HashMap<_, _>>();
+
+    // Clone corresponding tasks into `task` fields of time entries.
+    time_entries
+        .into_iter()
+        .map(|mut entry| {
+            entry.task = tasks_map.get(&entry.task_id).cloned();
+            entry
+        })
+        .collect()
 }
 
 /// Retrieve time entries for the given project from Clockify.
@@ -86,20 +105,72 @@ pub async fn retrieve_time_entries(
         time_entries.extend(entries);
     }
 
-    // Convert task list into a hash map for faster lookup.
-    let tasks_map = tasks
-        .into_iter()
-        .map(|task| (task.id.clone(), task))
-        .collect::<HashMap<_, _>>();
+    Ok(resolve_task_ids(time_entries, tasks))
+}
 
-    // Resolve task IDs in time entries.
-    let time_entries = time_entries
-        .into_iter()
-        .map(|mut entry| {
-            entry.task = tasks_map.get(&entry.task_id).cloned();
-            entry
-        })
-        .collect::<Vec<_>>();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    Ok(time_entries)
+    #[test]
+    fn test_resolve_task_ids() {
+        let tasks = vec![
+            Task {
+                id: "abcdef".to_string(),
+                name: "Task 1".to_string(),
+            },
+            Task {
+                id: "ghijkl".to_string(),
+                name: "Task 2".to_string(),
+            },
+        ];
+        let time_entries = vec![
+            TimeEntry {
+                description: "Entry 1".to_string(),
+                billable: true,
+                task_id: "abcdef".to_string(),
+                time_interval: TimeInterval {
+                    start: Local::now(),
+                    end: Local::now(),
+                },
+                task: None,
+            },
+            TimeEntry {
+                description: "Entry 2".to_string(),
+                billable: true,
+                task_id: "ghijkl".to_string(),
+                time_interval: TimeInterval {
+                    start: Local::now(),
+                    end: Local::now(),
+                },
+                task: None,
+            },
+        ];
+        let mut expected_result = time_entries.clone();
+        expected_result[0].task = Some(tasks[0].clone());
+        expected_result[1].task = Some(tasks[1].clone());
+        let result = resolve_task_ids(time_entries, tasks);
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn test_resolve_task_ids_unknown_id() {
+        let tasks = vec![Task {
+            id: "ghijkl".to_string(),
+            name: "Task 2".to_string(),
+        }];
+        let time_entries = vec![TimeEntry {
+            description: "Entry 1".to_string(),
+            billable: true,
+            task_id: "abcdef".to_string(),
+            time_interval: TimeInterval {
+                start: Local::now(),
+                end: Local::now(),
+            },
+            task: None,
+        }];
+        let expected_result = time_entries.clone();
+        let result = resolve_task_ids(time_entries, tasks);
+        assert_eq!(result, expected_result);
+    }
 }

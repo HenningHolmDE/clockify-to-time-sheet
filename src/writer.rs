@@ -49,7 +49,11 @@ fn format_time_field(time: &DateTime<Local>) -> String {
 
 /// Format the break field to h:mm format while rounding up to the next minute,
 /// if the second is >=30. (01:30:29 -> 1:30, 01:30:30 -> 1:31)
+/// Leave the field empty, if no break is recorded for the entry.
 fn format_break_field(duration: &Duration) -> String {
+    if duration.num_seconds() < 30 {
+        return String::new();
+    }
     let mut hour = duration.num_hours();
     let mut minute = duration.num_minutes() % 60;
     if duration.num_seconds() % 60 >= 30 {
@@ -88,9 +92,9 @@ mod tests {
     #[test]
     fn test_format_break_field_round_down() {
         let duration = Duration::seconds(0);
-        assert_eq!(format_break_field(&duration), "0:00");
+        assert_eq!(format_break_field(&duration), "");
         let duration = Duration::seconds(29);
-        assert_eq!(format_break_field(&duration), "0:00");
+        assert_eq!(format_break_field(&duration), "");
         let duration = Duration::seconds(60);
         assert_eq!(format_break_field(&duration), "0:01");
         let duration = Duration::seconds(59 * 60);
@@ -138,9 +142,9 @@ mod tests {
         assert_eq!(
             std::str::from_utf8(&buffer).unwrap(),
             r#"date,start,end,break,description
-01.10.22,08:00,09:00,0:00,Task 1
+01.10.22,08:00,09:00,,Task 1
 ,13:01,15:00,1:01,Task 2
-02.10.22,08:00,09:00,0:00,Task 3
+02.10.22,08:00,09:00,,Task 3
 "#
         );
     }

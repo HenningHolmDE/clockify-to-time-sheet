@@ -4,16 +4,24 @@ use std::io;
 
 /// Write given time sheet entries as CSV to the given writer. The fields are
 /// formatted as required by the time sheet and time values are rounded to the
-/// nearest minute.
+/// nearest minute and the date is only written for the first entry of a day.
 pub fn write_csv<W: io::Write>(
     wtr: W,
     time_sheet_entries: &Vec<TimeSheetEntry>,
 ) -> Result<(), csv::Error> {
     let mut wtr = csv::Writer::from_writer(wtr);
     wtr.write_record(&["date", "start", "end", "break", "description"])?;
+    let mut last_date: Option<String> = None;
     for entry in time_sheet_entries {
+        let date = entry.start.format("%d.%m.%y").to_string();
+        let date = if last_date.as_ref() == Some(&date) {
+            String::new()
+        } else {
+            last_date = Some(date.clone());
+            date
+        };
         wtr.write_record(&[
-            &entry.start.format("%d.%m.%y").to_string(),
+            &date,
             &format_time_field(&entry.start),
             &format_time_field(&entry.end),
             &format_break_field(&entry.break_),
@@ -118,6 +126,12 @@ mod tests {
                 end: Local.ymd(2022, 10, 1).and_hms(14, 59, 30),
                 break_: Duration::seconds(3630),
             },
+            TimeSheetEntry {
+                description: "Task 3".to_string(),
+                start: Local.ymd(2022, 10, 2).and_hms(8, 0, 0),
+                end: Local.ymd(2022, 10, 2).and_hms(9, 0, 0),
+                break_: Duration::zero(),
+            },
         ];
         let mut buffer: Vec<u8> = Vec::new();
         write_csv(&mut buffer, &entries).unwrap();
@@ -125,7 +139,8 @@ mod tests {
             std::str::from_utf8(&buffer).unwrap(),
             r#"date,start,end,break,description
 01.10.22,08:00,09:00,0:00,Task 1
-01.10.22,13:01,15:00,1:01,Task 2
+,13:01,15:00,1:01,Task 2
+02.10.22,08:00,09:00,0:00,Task 3
 "#
         );
     }

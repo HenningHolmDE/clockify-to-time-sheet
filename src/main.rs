@@ -1,7 +1,9 @@
 use anyhow::Result;
-use clockify_to_time_sheet::{clockify::retrieve_time_entries, transform::transform_time_entries};
+use clockify_to_time_sheet::{
+    clockify::retrieve_time_entries, transform::transform_time_entries, writer::write_csv,
+};
 use serde::Deserialize;
-use std::fs;
+use std::{fs, io};
 
 static CONFIG_FILE: &str = "config.toml";
 
@@ -27,12 +29,7 @@ async fn main() -> Result<()> {
 
     let time_sheet_entries = transform_time_entries(time_entries);
 
-    for entry in time_sheet_entries {
-        println!("Description: {}", entry.description);
-        println!("Start: {}", entry.start);
-        println!("End: {}", entry.end);
-        println!("Break: {}", entry.break_);
-    }
+    write_csv(io::stdout(), &time_sheet_entries)?;
 
     Ok(())
 }

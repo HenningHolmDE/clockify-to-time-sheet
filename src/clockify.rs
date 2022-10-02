@@ -72,9 +72,13 @@ pub async fn retrieve_time_entries(
     let mut time_entries: Vec<TimeEntry> = vec![];
     let start_end_range = StartEndRange::from_year_and_month(year, month);
     let (start, end) = (start_end_range.start(), start_end_range.end());
-    // TODO: The number of pages to retrieve should be increased to a useful
-    //       value when the rest of the application seems to do its job.
-    for page in 1..=1 {
+    // The API delivers 50 entries per page. Limiting retrieval to 5 page
+    // requests in case something goes wrong, results in a maximum of 250
+    // entries to be received. However, this might not be enough for everyone.
+    // TODO: The maximum number of pages should be configurable. Note that at
+    //       some point, the API limit of 10 requests per second will kick in
+    //       and will have to be handled.
+    for page in 1..=5 {
         let response = client
             .get(format!(
                 "{}/workspaces/{}/user/{}/time-entries?project={}&start={}&end={}&page={}",

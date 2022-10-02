@@ -24,6 +24,8 @@ async fn main() -> Result<()> {
         &config.user_id,
         &config.workspace_id,
         &config.project_id,
+        2022,
+        9,
     )
     .await?;
 

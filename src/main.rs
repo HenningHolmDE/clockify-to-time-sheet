@@ -3,7 +3,7 @@ use clockify_to_time_sheet::{
     clockify::retrieve_time_entries, transform::transform_time_entries, writer::write_csv,
 };
 use serde::Deserialize;
-use std::{fs, io};
+use std::fs;
 
 static CONFIG_FILE: &str = "config.toml";
 
@@ -23,22 +23,26 @@ struct Config {
 async fn main() -> Result<()> {
     let config: Config = toml::from_str(&fs::read_to_string(CONFIG_FILE)?)?;
 
+    // TODO: Year and month should be provided via command line parameters.
+    let year = 2022u32;
+    let month = 9u32;
+
     let time_entries = retrieve_time_entries(
         &config.api_key,
         &config.user_id,
         &config.workspace_id,
         &config.project_id,
-        // TODO: Year and month should be provided via command line parameters.
-        2022,
-        9,
+        year,
+        month,
     )
     .await?;
 
     let time_sheet_entries = transform_time_entries(time_entries);
 
-    // TODO: Output should be written to a CSV file instead of stdout if a file
-    //       name was provided via a command line parameter.
-    write_csv(io::stdout(), &time_sheet_entries)?;
+    // TODO: It should be possible to change the name of the CSV file via a
+    //       command line parameter.
+    let file = fs::File::create(format!("{}-{:02}.csv", year, month))?;
+    write_csv(file, &time_sheet_entries)?;
 
     Ok(())
 }

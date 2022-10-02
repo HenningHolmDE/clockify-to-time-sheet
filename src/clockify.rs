@@ -72,6 +72,8 @@ pub async fn retrieve_time_entries(
     let mut time_entries: Vec<TimeEntry> = vec![];
     let start_end_range = StartEndRange::from_year_and_month(year, month);
     let (start, end) = (start_end_range.start(), start_end_range.end());
+    // TODO: The number of pages to retrieve should be increased to a useful
+    //       value when the rest of the application seems to do its job.
     for page in 1..=1 {
         let response = client
             .get(format!(

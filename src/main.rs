@@ -47,8 +47,13 @@ async fn main() -> Result<()> {
         args.month,
     )
     .await?;
+    println!("Retrieved {} time entries.", time_entries.len());
 
     let time_sheet_entries = transform_time_entries(time_entries);
+    println!(
+        "Writing {} time sheet entries ...",
+        time_sheet_entries.len()
+    );
 
     let file = fs::File::create(
         args.output

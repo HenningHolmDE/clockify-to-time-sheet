@@ -18,6 +18,19 @@ pub enum ClockifyError {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
+pub struct User {
+    id: String,
+    active_workspace: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct ApiUser {
+    api_key: String,
+    user: User,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct Task {
     pub id: String,
     pub name: String,
@@ -40,28 +53,36 @@ pub struct TimeEntry {
     pub task: Option<Task>,
 }
 
+/// Retrieve user ID and active workspace ID from Clockify API.
+pub async fn get_api_user(api_key: &str) -> Result<ApiUser, ClockifyError> {
+    let client = build_client(api_key)?;
+
+    // Get user/workspace info from Clockify.
+    let response = client
+        .get(format!("{}/user", CLOCKIFY_API_BASE))
+        .send()
+        .await?;
+    let response_body = response.text().await?;
+    Ok(ApiUser {
+        api_key: api_key.to_owned(),
+        user: serde_json::from_str(&response_body)?,
+    })
+}
+
 /// Retrieve time entries for the given project from Clockify.
 pub async fn retrieve_time_entries(
-    api_key: &str,
-    user_id: &str,
-    workspace_id: &str,
+    api_user: &ApiUser,
     project_id: &str,
     year: u32,
     month: u32,
 ) -> Result<Vec<TimeEntry>, ClockifyError> {
-    // Set up REST client.
-    let mut headers = header::HeaderMap::new();
-    headers.insert("X-Api-Key", HeaderValue::from_str(api_key)?);
-    let client = reqwest::ClientBuilder::new()
-        .default_headers(headers)
-        .user_agent("clockify-to-time-sheet")
-        .build()?;
+    let client = build_client(&api_user.api_key)?;
 
     // Get tasks from Clockify.
     let response = client
         .get(format!(
             "{}/workspaces/{}/projects/{}/tasks",
-            CLOCKIFY_API_BASE, workspace_id, project_id
+            CLOCKIFY_API_BASE, api_user.user.active_workspace, project_id
         ))
         .send()
         .await?;
@@ -82,7 +103,13 @@ pub async fn retrieve_time_entries(
         let response = client
             .get(format!(
                 "{}/workspaces/{}/user/{}/time-entries?project={}&start={}&end={}&page={}",
-                CLOCKIFY_API_BASE, workspace_id, user_id, project_id, start, end, page
+                CLOCKIFY_API_BASE,
+                api_user.user.active_workspace,
+                api_user.user.id,
+                project_id,
+                start,
+                end,
+                page
             ))
             .send()
             .await?;
@@ -95,6 +122,17 @@ pub async fn retrieve_time_entries(
     }
 
     Ok(resolve_task_ids(time_entries, tasks))
+}
+
+/// Build a reqwest client for accessing the API.
+fn build_client(api_key: &str) -> Result<reqwest::Client, ClockifyError> {
+    let mut headers = header::HeaderMap::new();
+    headers.insert("X-Api-Key", HeaderValue::from_str(api_key)?);
+    let client = reqwest::ClientBuilder::new()
+        .default_headers(headers)
+        .user_agent("clockify-to-time-sheet")
+        .build()?;
+    Ok(client)
 }
 
 /// Struct for providing the start and end filter values for limiting the time

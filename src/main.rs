@@ -1,7 +1,9 @@
 use anyhow::Result;
 use clap::Parser;
 use clockify_to_time_sheet::{
-    clockify::retrieve_time_entries, transform::transform_time_entries, writer::write_csv,
+    clockify::{get_api_user, retrieve_time_entries},
+    transform::transform_time_entries,
+    writer::write_csv,
 };
 use serde::Deserialize;
 use std::fs;
@@ -23,10 +25,6 @@ struct Args {
 #[derive(Debug, Deserialize)]
 struct Config {
     api_key: String,
-    // TODO: User ID and workspace ID (for default workspace) should be read
-    //       via the Clockify API.
-    user_id: String,
-    workspace_id: String,
     // TODO: Project name should be provided via command line argument and ID
     //       should be looked up via the Clockify API.
     project_id: String,
@@ -38,15 +36,10 @@ async fn main() -> Result<()> {
 
     let config: Config = toml::from_str(&fs::read_to_string(CONFIG_FILE)?)?;
 
-    let time_entries = retrieve_time_entries(
-        &config.api_key,
-        &config.user_id,
-        &config.workspace_id,
-        &config.project_id,
-        args.year,
-        args.month,
-    )
-    .await?;
+    let api_user = get_api_user(&config.api_key).await?;
+
+    let time_entries =
+        retrieve_time_entries(&api_user, &config.project_id, args.year, args.month).await?;
     println!("Retrieved {} time entries.", time_entries.len());
 
     let time_sheet_entries = transform_time_entries(time_entries);

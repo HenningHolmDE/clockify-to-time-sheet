@@ -1,4 +1,2 @@
 api_key = "CLOCKIFY_API_KEY"
-user_id = "CLOCKIFY_USER_ID"
-workspace_id = "CLOCKIFY_WORKSPACE_ID"
 project_id = "CLOCKIFY_PROJECT_ID"

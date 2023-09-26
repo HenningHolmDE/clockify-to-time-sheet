@@ -44,7 +44,7 @@ fn format_time_field(time: &DateTime<Local>) -> String {
         minute -= 60;
         hour += 1;
     }
-    format!("{:02}:{:02}", hour, minute)
+    format!("{hour:02}:{minute:02}")
 }
 
 /// Format the break field to h:mm format while rounding up to the next minute,
@@ -63,7 +63,7 @@ fn format_break_field(duration: &Duration) -> String {
         minute -= 60;
         hour += 1;
     }
-    format!("{}:{:02}", hour, minute)
+    format!("{hour}:{minute:02}")
 }
 
 #[cfg(test)]

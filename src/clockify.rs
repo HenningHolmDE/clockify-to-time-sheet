@@ -59,7 +59,7 @@ pub async fn get_api_user(api_key: &str) -> Result<ApiUser, ClockifyError> {
 
     // Get user/workspace info from Clockify.
     let response = client
-        .get(format!("{}/user", CLOCKIFY_API_BASE))
+        .get(format!("{CLOCKIFY_API_BASE}/user"))
         .send()
         .await?;
     let response_body = response.text().await?;
@@ -155,7 +155,7 @@ impl StartEndRange {
         } else {
             (self.year, self.month + 1)
         };
-        format!("{}-{:02}-01T00:00:00Z", year, month)
+        format!("{year}-{month:02}-01T00:00:00Z")
     }
 }
 

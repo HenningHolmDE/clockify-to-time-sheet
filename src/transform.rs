@@ -76,7 +76,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 2".to_string(),
                 billable: true,
-                task_id: "ghijkl".to_string(),
+                task_id: Some("ghijkl".to_string()),
                 time_interval: TimeInterval {
                     start: Local.ymd(2022, 10, 1).and_hms(14, 45, 0),
                     end: Local.ymd(2022, 10, 1).and_hms(15, 15, 15),
@@ -89,7 +89,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 1".to_string(),
                 billable: true,
-                task_id: "abcdef".to_string(),
+                task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
                     start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
                     end: Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
@@ -123,7 +123,7 @@ mod tests {
         let time_entries = vec![TimeEntry {
             description: "Entry 1".to_string(),
             billable: true,
-            task_id: "".to_string(),
+            task_id: None,
             time_interval: TimeInterval {
                 start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
                 end: Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
@@ -259,7 +259,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 6".to_string(),
                 billable: true,
-                task_id: "abcdef".to_string(),
+                task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
                     start: Local.ymd(2022, 10, 1).and_hms(16, 0, 0),
                     end: Local.ymd(2022, 10, 1).and_hms(17, 0, 0),
@@ -272,7 +272,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 5".to_string(),
                 billable: true,
-                task_id: "".to_string(),
+                task_id: None,
                 time_interval: TimeInterval {
                     start: Local.ymd(2022, 10, 1).and_hms(15, 50, 0),
                     end: Local.ymd(2022, 10, 1).and_hms(15, 55, 0),
@@ -282,7 +282,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 5".to_string(),
                 billable: true,
-                task_id: "".to_string(),
+                task_id: None,
                 time_interval: TimeInterval {
                     start: Local.ymd(2022, 10, 1).and_hms(15, 30, 0),
                     end: Local.ymd(2022, 10, 1).and_hms(15, 45, 0),
@@ -292,7 +292,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 4".to_string(),
                 billable: true,
-                task_id: "ghijkl".to_string(),
+                task_id: Some("ghijkl".to_string()),
                 time_interval: TimeInterval {
                     start: Local.ymd(2022, 10, 1).and_hms(15, 5, 0),
                     end: Local.ymd(2022, 10, 1).and_hms(15, 10, 30),
@@ -305,7 +305,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 3".to_string(),
                 billable: true,
-                task_id: "abcdef".to_string(),
+                task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
                     start: Local.ymd(2022, 10, 1).and_hms(14, 45, 0),
                     end: Local.ymd(2022, 10, 1).and_hms(15, 0, 15),
@@ -318,7 +318,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 2".to_string(),
                 billable: true,
-                task_id: "abcdef".to_string(),
+                task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
                     start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
                     end: Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
@@ -331,7 +331,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 1".to_string(),
                 billable: true,
-                task_id: "abcdef".to_string(),
+                task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
                     start: Local.ymd(2022, 9, 30).and_hms(12, 10, 0),
                     end: Local.ymd(2022, 9, 30).and_hms(12, 25, 30),

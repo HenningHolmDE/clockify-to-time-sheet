@@ -48,7 +48,7 @@ pub struct TimeInterval {
 pub struct TimeEntry {
     pub description: String,
     pub billable: bool,
-    pub task_id: String,
+    pub task_id: Option<String>,
     pub time_interval: TimeInterval,
     pub task: Option<Task>,
 }
@@ -172,7 +172,9 @@ fn resolve_task_ids(time_entries: Vec<TimeEntry>, tasks: Vec<Task>) -> Vec<TimeE
     time_entries
         .into_iter()
         .map(|mut entry| {
-            entry.task = tasks_map.get(&entry.task_id).cloned();
+            if let Some(ref task_id) = entry.task_id {
+                entry.task = tasks_map.get(task_id).cloned();
+            }
             entry
         })
         .collect()
@@ -215,7 +217,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 1".to_string(),
                 billable: true,
-                task_id: "abcdef".to_string(),
+                task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
                     start: Local::now(),
                     end: Local::now(),
@@ -225,7 +227,7 @@ mod tests {
             TimeEntry {
                 description: "Entry 2".to_string(),
                 billable: true,
-                task_id: "ghijkl".to_string(),
+                task_id: Some("ghijkl".to_string()),
                 time_interval: TimeInterval {
                     start: Local::now(),
                     end: Local::now(),
@@ -246,16 +248,28 @@ mod tests {
             id: "ghijkl".to_string(),
             name: "Task 2".to_string(),
         }];
-        let time_entries = vec![TimeEntry {
-            description: "Entry 1".to_string(),
-            billable: true,
-            task_id: "abcdef".to_string(),
-            time_interval: TimeInterval {
-                start: Local::now(),
-                end: Local::now(),
+        let time_entries = vec![
+            TimeEntry {
+                description: "Entry 1".to_string(),
+                billable: true,
+                task_id: Some("abcdef".to_string()),
+                time_interval: TimeInterval {
+                    start: Local::now(),
+                    end: Local::now(),
+                },
+                task: None,
             },
-            task: None,
-        }];
+            TimeEntry {
+                description: "Entry 2".to_string(),
+                billable: true,
+                task_id: None,
+                time_interval: TimeInterval {
+                    start: Local::now(),
+                    end: Local::now(),
+                },
+                task: None,
+            },
+        ];
         let expected_result = time_entries.clone();
         let result = resolve_task_ids(time_entries, tasks);
         assert_eq!(result, expected_result);

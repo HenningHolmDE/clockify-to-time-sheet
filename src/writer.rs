@@ -10,7 +10,7 @@ pub fn write_csv<W: io::Write>(
     time_sheet_entries: &Vec<TimeSheetEntry>,
 ) -> Result<(), csv::Error> {
     let mut wtr = csv::Writer::from_writer(wtr);
-    wtr.write_record(&["date", "start", "end", "break", "description"])?;
+    wtr.write_record(["date", "start", "end", "break", "description"])?;
     let mut last_date: Option<String> = None;
     for entry in time_sheet_entries {
         let date = entry.start.format("%d.%m.%y").to_string();
@@ -20,7 +20,7 @@ pub fn write_csv<W: io::Write>(
             last_date = Some(date.clone());
             date
         };
-        wtr.write_record(&[
+        wtr.write_record([
             &date,
             &format_time_field(&entry.start),
             &format_time_field(&entry.end),

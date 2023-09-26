@@ -51,7 +51,9 @@ fn merge_time_sheet_entries(time_entries: Vec<TimeSheetEntry>) -> Vec<TimeSheetE
     let mut result: Vec<TimeSheetEntry> = Vec::with_capacity(time_entries.len());
     for entry in time_entries {
         if let Some(last) = result.last_mut() {
-            if last.description == entry.description && last.end.date() == entry.end.date() {
+            if last.description == entry.description
+                && last.end.date_naive() == entry.end.date_naive()
+            {
                 last.break_ = last.break_ + (entry.start - last.end);
                 last.end = entry.end;
             } else {
@@ -78,8 +80,8 @@ mod tests {
                 billable: true,
                 task_id: Some("ghijkl".to_string()),
                 time_interval: TimeInterval {
-                    start: Local.ymd(2022, 10, 1).and_hms(14, 45, 0),
-                    end: Local.ymd(2022, 10, 1).and_hms(15, 15, 15),
+                    start: Local.with_ymd_and_hms(2022, 10, 1, 14, 45, 0).unwrap(),
+                    end: Local.with_ymd_and_hms(2022, 10, 1, 15, 15, 15).unwrap(),
                 },
                 task: Some(Task {
                     id: "ghijkl".to_string(),
@@ -91,8 +93,8 @@ mod tests {
                 billable: true,
                 task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
-                    start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
-                    end: Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
+                    start: Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 0).unwrap(),
+                    end: Local.with_ymd_and_hms(2022, 10, 1, 12, 25, 30).unwrap(),
                 },
                 task: Some(Task {
                     id: "abcdef".to_string(),
@@ -125,8 +127,8 @@ mod tests {
             billable: true,
             task_id: None,
             time_interval: TimeInterval {
-                start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 12, 25, 30).unwrap(),
             },
             task: None,
         }];
@@ -145,23 +147,23 @@ mod tests {
         let time_sheet_entries = vec![
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 12, 25, 30).unwrap(),
                 break_: Duration::zero(),
             },
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(14, 45, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(15, 15, 15),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 14, 45, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 15, 15, 15).unwrap(),
                 break_: Duration::zero(),
             },
         ];
         let expected_result = vec![TimeSheetEntry {
             description: "Task 1".to_string(),
             // Start of first entry.
-            start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
+            start: Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 0).unwrap(),
             // Start of last entry.
-            end: Local.ymd(2022, 10, 1).and_hms(15, 15, 15),
+            end: Local.with_ymd_and_hms(2022, 10, 1, 15, 15, 15).unwrap(),
             // Break from 12:25:30 to 14:45:00 -> 2:19:30 = 8370 sec.
             break_: Duration::seconds(8370),
         }];
@@ -174,20 +176,20 @@ mod tests {
         let time_sheet_entries = vec![
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 12, 25, 30).unwrap(),
                 break_: Duration::zero(),
             },
             TimeSheetEntry {
                 description: "Task 2".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(13, 0, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(13, 30, 0),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 13, 0, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 13, 30, 0).unwrap(),
                 break_: Duration::zero(),
             },
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(14, 45, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(15, 15, 15),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 14, 45, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 15, 15, 15).unwrap(),
                 break_: Duration::zero(),
             },
         ];
@@ -201,14 +203,14 @@ mod tests {
         let time_sheet_entries = vec![
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 12, 25, 30).unwrap(),
                 break_: Duration::zero(),
             },
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 2).and_hms(14, 45, 0),
-                end: Local.ymd(2022, 10, 2).and_hms(15, 15, 15),
+                start: Local.with_ymd_and_hms(2022, 10, 2, 14, 45, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 2, 15, 15, 15).unwrap(),
                 break_: Duration::zero(),
             },
         ];
@@ -222,29 +224,29 @@ mod tests {
         let time_sheet_entries = vec![
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 12, 25, 30).unwrap(),
                 break_: Duration::zero(),
             },
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(14, 45, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(15, 15, 15),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 14, 45, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 15, 15, 15).unwrap(),
                 break_: Duration::zero(),
             },
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(16, 0, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(16, 15, 0),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 16, 0, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 16, 15, 0).unwrap(),
                 break_: Duration::zero(),
             },
         ];
         let expected_result = vec![TimeSheetEntry {
             description: "Task 1".to_string(),
             // Start of first entry.
-            start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
+            start: Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 0).unwrap(),
             // Start of last entry.
-            end: Local.ymd(2022, 10, 1).and_hms(16, 15, 0),
+            end: Local.with_ymd_and_hms(2022, 10, 1, 16, 15, 0).unwrap(),
             // Break from 12:25:30 to 14:45:00 -> 2:19:30 = 8370 sec.
             // Break from 15:15:15 to 16:00:00 -> 0:44:45 = 2685 sec.
             break_: Duration::seconds(8370 + 2685),
@@ -261,8 +263,8 @@ mod tests {
                 billable: true,
                 task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
-                    start: Local.ymd(2022, 10, 1).and_hms(16, 0, 0),
-                    end: Local.ymd(2022, 10, 1).and_hms(17, 0, 0),
+                    start: Local.with_ymd_and_hms(2022, 10, 1, 16, 0, 0).unwrap(),
+                    end: Local.with_ymd_and_hms(2022, 10, 1, 17, 0, 0).unwrap(),
                 },
                 task: Some(Task {
                     id: "abcdef".to_string(),
@@ -274,8 +276,8 @@ mod tests {
                 billable: true,
                 task_id: None,
                 time_interval: TimeInterval {
-                    start: Local.ymd(2022, 10, 1).and_hms(15, 50, 0),
-                    end: Local.ymd(2022, 10, 1).and_hms(15, 55, 0),
+                    start: Local.with_ymd_and_hms(2022, 10, 1, 15, 50, 0).unwrap(),
+                    end: Local.with_ymd_and_hms(2022, 10, 1, 15, 55, 0).unwrap(),
                 },
                 task: None,
             },
@@ -284,8 +286,8 @@ mod tests {
                 billable: true,
                 task_id: None,
                 time_interval: TimeInterval {
-                    start: Local.ymd(2022, 10, 1).and_hms(15, 30, 0),
-                    end: Local.ymd(2022, 10, 1).and_hms(15, 45, 0),
+                    start: Local.with_ymd_and_hms(2022, 10, 1, 15, 30, 0).unwrap(),
+                    end: Local.with_ymd_and_hms(2022, 10, 1, 15, 45, 0).unwrap(),
                 },
                 task: None,
             },
@@ -294,8 +296,8 @@ mod tests {
                 billable: true,
                 task_id: Some("ghijkl".to_string()),
                 time_interval: TimeInterval {
-                    start: Local.ymd(2022, 10, 1).and_hms(15, 5, 0),
-                    end: Local.ymd(2022, 10, 1).and_hms(15, 10, 30),
+                    start: Local.with_ymd_and_hms(2022, 10, 1, 15, 5, 0).unwrap(),
+                    end: Local.with_ymd_and_hms(2022, 10, 1, 15, 10, 30).unwrap(),
                 },
                 task: Some(Task {
                     id: "ghijkl".to_string(),
@@ -307,8 +309,8 @@ mod tests {
                 billable: true,
                 task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
-                    start: Local.ymd(2022, 10, 1).and_hms(14, 45, 0),
-                    end: Local.ymd(2022, 10, 1).and_hms(15, 0, 15),
+                    start: Local.with_ymd_and_hms(2022, 10, 1, 14, 45, 0).unwrap(),
+                    end: Local.with_ymd_and_hms(2022, 10, 1, 15, 0, 15).unwrap(),
                 },
                 task: Some(Task {
                     id: "abcdef".to_string(),
@@ -320,8 +322,8 @@ mod tests {
                 billable: true,
                 task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
-                    start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
-                    end: Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
+                    start: Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 0).unwrap(),
+                    end: Local.with_ymd_and_hms(2022, 10, 1, 12, 25, 30).unwrap(),
                 },
                 task: Some(Task {
                     id: "abcdef".to_string(),
@@ -333,8 +335,8 @@ mod tests {
                 billable: true,
                 task_id: Some("abcdef".to_string()),
                 time_interval: TimeInterval {
-                    start: Local.ymd(2022, 9, 30).and_hms(12, 10, 0),
-                    end: Local.ymd(2022, 9, 30).and_hms(12, 25, 30),
+                    start: Local.with_ymd_and_hms(2022, 9, 30, 12, 10, 0).unwrap(),
+                    end: Local.with_ymd_and_hms(2022, 9, 30, 12, 25, 30).unwrap(),
                 },
                 task: Some(Task {
                     id: "abcdef".to_string(),
@@ -345,34 +347,34 @@ mod tests {
         let expected_result = vec![
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 9, 30).and_hms(12, 10, 0),
-                end: Local.ymd(2022, 9, 30).and_hms(12, 25, 30),
+                start: Local.with_ymd_and_hms(2022, 9, 30, 12, 10, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 9, 30, 12, 25, 30).unwrap(),
                 break_: Duration::zero(),
             },
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(12, 10, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(15, 0, 15),
-                break_: Local.ymd(2022, 10, 1).and_hms(14, 45, 0)
-                    - Local.ymd(2022, 10, 1).and_hms(12, 25, 30),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 15, 0, 15).unwrap(),
+                break_: Local.with_ymd_and_hms(2022, 10, 1, 14, 45, 0).unwrap()
+                    - Local.with_ymd_and_hms(2022, 10, 1, 12, 25, 30).unwrap(),
             },
             TimeSheetEntry {
                 description: "Task 2".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(15, 5, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(15, 10, 30),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 15, 5, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 15, 10, 30).unwrap(),
                 break_: Duration::zero(),
             },
             TimeSheetEntry {
                 description: "Entry 5".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(15, 30, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(15, 55, 0),
-                break_: Local.ymd(2022, 10, 1).and_hms(15, 50, 0)
-                    - Local.ymd(2022, 10, 1).and_hms(15, 45, 0),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 15, 30, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 15, 55, 0).unwrap(),
+                break_: Local.with_ymd_and_hms(2022, 10, 1, 15, 50, 0).unwrap()
+                    - Local.with_ymd_and_hms(2022, 10, 1, 15, 45, 0).unwrap(),
             },
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(16, 0, 0),
-                end: Local.ymd(2022, 10, 1).and_hms(17, 0, 0),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 16, 0, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 17, 0, 0).unwrap(),
                 break_: Duration::zero(),
             },
         ];

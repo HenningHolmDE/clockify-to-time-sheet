@@ -73,19 +73,19 @@ mod tests {
 
     #[test]
     fn test_format_time_field_round_down() {
-        let time = Local.ymd(2022, 10, 1).and_hms(8, 9, 15);
+        let time = Local.with_ymd_and_hms(2022, 10, 1, 8, 9, 15).unwrap();
         assert_eq!(format_time_field(&time), "08:09");
-        let time = Local.ymd(2022, 10, 1).and_hms(11, 59, 29);
+        let time = Local.with_ymd_and_hms(2022, 10, 1, 11, 59, 29).unwrap();
         assert_eq!(format_time_field(&time), "11:59");
     }
 
     #[test]
     fn test_format_time_field_round_up() {
-        let time = Local.ymd(2022, 10, 1).and_hms(12, 10, 45);
+        let time = Local.with_ymd_and_hms(2022, 10, 1, 12, 10, 45).unwrap();
         assert_eq!(format_time_field(&time), "12:11");
-        let time = Local.ymd(2022, 10, 1).and_hms(9, 5, 30);
+        let time = Local.with_ymd_and_hms(2022, 10, 1, 9, 5, 30).unwrap();
         assert_eq!(format_time_field(&time), "09:06");
-        let time = Local.ymd(2022, 10, 1).and_hms(8, 59, 30);
+        let time = Local.with_ymd_and_hms(2022, 10, 1, 8, 59, 30).unwrap();
         assert_eq!(format_time_field(&time), "09:00");
     }
 
@@ -120,20 +120,20 @@ mod tests {
         let entries = vec![
             TimeSheetEntry {
                 description: "Task 1".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(8, 0, 29),
-                end: Local.ymd(2022, 10, 1).and_hms(8, 59, 30),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 8, 0, 29).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 8, 59, 30).unwrap(),
                 break_: Duration::zero(),
             },
             TimeSheetEntry {
                 description: "Task 2".to_string(),
-                start: Local.ymd(2022, 10, 1).and_hms(13, 0, 31),
-                end: Local.ymd(2022, 10, 1).and_hms(14, 59, 30),
+                start: Local.with_ymd_and_hms(2022, 10, 1, 13, 0, 31).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 1, 14, 59, 30).unwrap(),
                 break_: Duration::seconds(3630),
             },
             TimeSheetEntry {
                 description: "Task 3".to_string(),
-                start: Local.ymd(2022, 10, 2).and_hms(8, 0, 0),
-                end: Local.ymd(2022, 10, 2).and_hms(9, 0, 0),
+                start: Local.with_ymd_and_hms(2022, 10, 2, 8, 0, 0).unwrap(),
+                end: Local.with_ymd_and_hms(2022, 10, 2, 9, 0, 0).unwrap(),
                 break_: Duration::zero(),
             },
         ];
